@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cash App Demo (Educational Only)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #00d632; color: #000; min-height: 100vh; display: flex; justify-content: center; padding: 20px; }
+    .app { background: white; width: 100%; max-width: 400px; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+    .header { background: #00d632; padding: 20px; text-align: center; color: white; }
+    .header h1 { font-size: 24px; margin-bottom: 4px; }
+    .balance { font-size: 42px; font-weight: 700; margin: 10px 0; }
+    .cashtag { opacity: 0.9; }
+    .content { padding: 20px; }
+    .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; margin-bottom: 12px; cursor: pointer; }
+    .btn-primary { background: #00d632; color: white; }
+    .btn-secondary { background: #f0f0f0; color: #000; }
+    input { width: 100%; padding: 14px; border: 2px solid #eee; border-radius: 12px; font-size: 16px; margin-bottom: 12px; }
+    .transactions { margin-top: 20px; }
+    .tx { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+    .tx-amount.positive { color: #00d632; }
+    .tx-amount.negative { color: #ff3b30; }
+    .hidden { display: none; }
+    .login-screen, .main-screen { padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Login / Create Account -->
+    <div id="loginScreen" class="login-screen">
+      <div class="header">
+        <h1>Cash App Demo</h1>
+        <p>Educational prototype only</p>
+      </div>
+      <div class="content">
+        <input type="text" id="cashtagInput" placeholder="$yourcashtag" />
+        <input type="number" id="startBalance" placeholder="Starting balance (fake $)" value="100" />
+        <button class="btn btn-primary" onclick="createAccount()">Create Account</button>
+        <p style="font-size:13px; color:#666; margin-top:12px;">
+          This is NOT real Cash App. No real money is involved.
+        </p>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainScreen" class="main-screen hidden">
+      <div class="header">
+        <div class="cashtag" id="displayCashtag">$you</div>
+        <div class="balance" id="displayBalance">$0.00</div>
+      </div>
+      <div class="content">
+        <button class="btn btn-primary" onclick="showSend()">Send</button>
+        <button class="btn btn-secondary" onclick="showAdd()">Add Money</button>
+        <button class="btn btn-secondary" onclick="logout()">Log out</button>
+
+        <div id="sendForm" class="hidden" style="margin-top:20px;">
+          <input type="text" id="toCashtag" placeholder="To $cashtag" />
+          <input type="number" id="amount" placeholder="Amount" />
+          <button class="btn btn-primary" onclick="sendMoney()">Confirm Send</button>
+          <button class="btn btn-secondary" onclick="hideForms()">Cancel</button>
+        </div>
+
+        <div id="addForm" class="hidden" style="margin-top:20px;">
+          <input type="number" id="addAmount" placeholder="Amount to add" />
+          <button class="btn btn-primary" onclick="addMoney()">Add</button>
+          <button class="btn btn-secondary" onclick="hideForms()">Cancel</button>
+        </div>
+
+        <div class="transactions">
+          <h3 style="margin-bottom:12px;">Activity</h3>
+          <div id="txList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple localStorage "database"
+    let currentUser = null;
+
+    function loadUser() {
+      const data = localStorage.getItem('cashapp_demo_user');
+      if (data) {
+        currentUser = JSON.parse(data);
+        showMain();
+      }
+    }
+
+    function saveUser() {
+      localStorage.setItem('cashapp_demo_user', JSON.stringify(currentUser));
+    }
+
+    function createAccount() {
+      let tag = document.getElementById('cashtagInput').value.trim().toLowerCase();
+      if (!tag.startsWith('$')) tag = '$' + tag;
+      if (tag.length < 3) return alert('Enter a cashtag');
+
+      const balance = parseFloat(document.getElementById('startBalance').value) || 0;
+
+      currentUser = {
+        cashtag: tag,
+        balance: balance,
+        transactions: []
+      };
+      saveUser();
+      showMain();
+    }
+
+    function showMain() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('mainScreen').classList.remove('hidden');
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('displayCashtag').textContent = currentUser.cashtag;
+      document.getElementById('displayBalance').textContent = '$' + currentUser.balance.toFixed(2);
+
+      const list = document.getElementById('txList');
+      list.innerHTML = '';
+      currentUser.transactions.slice().reverse().forEach(tx => {
+        const div = document.createElement('div');
+        div.className = 'tx';
+        div.innerHTML = `
+          <div>
+            <strong>${tx.to || tx.from || 'You'}</strong><br>
+            <small>${new Date(tx.date).toLocaleString()}</small>
+          </div>
+          <div class="tx-amount ${tx.amount > 0 ? 'positive' : 'negative'}">
+            ${tx.amount > 0 ? '+' : ''}$${Math.abs(tx.amount).toFixed(2)}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function showSend() {
+      hideForms();
+      document.getElementById('sendForm').classList.remove('hidden');
+    }
+
+    function showAdd() {
+      hideForms();
+      document.getElementById('addForm').classList.remove('hidden');
+    }
+
+    function hideForms() {
+      document.getElementById('sendForm').classList.add('hidden');
+      document.getElementById('addForm').classList.add('hidden');
+    }
+
+    function sendMoney() {
+      const to = document.getElementById('toCashtag').value.trim().toLowerCase();
+      const amount = parseFloat(document.getElementById('amount').value);
+
+      if (!to || !to.startsWith('$') || isNaN(amount) || amount <= 0) {
+        return alert('Enter valid $cashtag and amount');
+      }
+      if (amount > currentUser.balance) {
+        return alert('Insufficient balance');
+      }
+
+      currentUser.balance -= amount;
+      currentUser.transactions.push({
+        to: to,
+        amount: -amount,
+        date: new Date().toISOString()
+      });
+
+      // Also record a fake "received" for demo purposes
+      // (in real life this would go to another user)
+
+      saveUser();
+      hideForms();
+      updateUI();
+      alert(`Sent $${amount.toFixed(2)} to ${to}`);
+    }
+
+    function addMoney() {
+      const amount = parseFloat(document.getElementById('addAmount').value);
+      if (isNaN(amount) || amount <= 0) return alert('Enter a valid amount');
+
+      currentUser.balance += amount;
+      currentUser.transactions.push({
+        from: 'Bank',
+        amount: amount,
+        date: new Date().toISOString()
+      });
+
+      saveUser();
+      hideForms();
+      updateUI();
+    }
+
+    function logout() {
+      localStorage.removeItem('cashapp_demo_user');
+      location.reload();
+    }
+
+    // Start
+    loadUser();
+  </script>
+</body>
+</html>
