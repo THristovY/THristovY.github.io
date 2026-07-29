@@ -1,0 +1,38 @@
+# Educational self-custody core (Python)
+# Requires: pip install eth-account mnemonic  (for real use)
+
+from eth_account import Account
+from mnemonic import Mnemonic
+import secrets
+
+# 1. Generate a secure mnemonic (seed phrase) - the heart of self-custody
+def generate_seed_phrase(strength=128):  # 12 words
+    mnemo = Mnemonic("english")
+    # Use cryptographically secure randomness
+    entropy = secrets.token_bytes(strength // 8)
+    return mnemo.to_mnemonic(entropy)
+
+# 2. Derive private key + address from mnemonic (BIP39 → BIP32 style)
+def derive_account(mnemonic: str, account_index: int = 0):
+    # Enable unaudited HD wallet features (only for learning)
+    Account.enable_unaudited_hdwallet_features()
+    
+    # Standard Ethereum derivation path
+    path = f"m/44'/60'/0'/0/{account_index}"
+    account = Account.from_mnemonic(mnemonic, account_path=path)
+    
+    return {
+        "address": account.address,
+        "private_key": account.key.hex(),   # NEVER expose this in a real app
+        "path": path
+    }
+
+# --- Demo ---
+if __name__ == "__main__":
+    seed = generate_seed_phrase()
+    print("Seed phrase (BACKUP THIS SECURELY):\n", seed)
+    print("-" * 50)
+    
+    acc = derive_account(seed)
+    print("Address:", acc["address"])
+    print("Private key (DO NOT SHARE):", acc["private_key"])
