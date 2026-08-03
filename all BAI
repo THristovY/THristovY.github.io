@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FitZone Tracker</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 2rem;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    input, select, textarea {
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 1rem;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: var(--accent-hover); }
+
+    button.secondary {
+      background: #334155;
+      color: var(--text);
+    }
+
+    button.secondary:hover { background: #475569; }
+
+    .result {
+      margin-top: 12px;
+      padding: 12px;
+      background: #0f172a;
+      border-radius: 10px;
+      font-size: 1.1rem;
+    }
+
+    .water-glasses {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+
+    .glass {
+      width: 40px;
+      height: 50px;
+      border: 2px solid #38bdf8;
+      border-radius: 0 0 8px 8px;
+      cursor: pointer;
+      position: relative;
+      background: transparent;
+      transition: all 0.2s;
+    }
+
+    .glass.filled {
+      background: #38bdf8;
+      box-shadow: 0 0 12px rgba(56,189,248,0.4);
+    }
+
+    .workout-item {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .workout-info { flex: 1; }
+
+    .workout-info strong { color: var(--accent); }
+
+    .delete-btn {
+      background: #ef4444;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .delete-btn:hover { background: #dc2626; }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💪 FitZone Tracker</h1>
+    <p class="subtitle">Your simple daily fitness companion</p>
+
+    <!-- BMI -->
+    <div class="card">
+      <h2>📏 BMI Calculator</h2>
+      <div class="input-group">
+        <input type="number" id="height" placeholder="Height (cm)" min="100" max="250">
+        <input type="number" id="weight" placeholder="Weight (kg)" min="30" max="300">
+        <button onclick="calcBMI()">Calculate</button>
+      </div>
+      <div id="bmiResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Water -->
+    <div class="card">
+      <h2>💧 Water Intake</h2>
+      <p style="color:var(--muted); margin-bottom:8px;">Goal: 8 glasses</p>
+      <div class="water-glasses" id="waterGlasses"></div>
+      <button class="secondary" onclick="resetWater()">Reset Today</button>
+    </div>
+
+    <!-- Workout Log -->
+    <div class="card">
+      <h2>🏋️ Workout Log</h2>
+      <div class="input-group">
+        <input type="text" id="exercise" placeholder="Exercise (e.g. Squats)">
+        <input type="text" id="details" placeholder="Sets × Reps or duration">
+      </div>
+      <div class="input-group">
+        <textarea id="notes" placeholder="Notes (optional)" rows="2" style="width:100%"></textarea>
+      </div>
+      <button onclick="addWorkout()">Add Workout</button>
+
+      <div id="workoutList" style="margin-top:20px;"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <h2>📊 Today’s Snapshot</h2>
+      <div class="stats" id="stats">
+        <div class="stat">
+          <div class="stat-value" id="statWorkouts">0</div>
+          <div class="stat-label">Workouts</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="statWater">0</div>
+          <div class="stat-label">Glasses</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Water ----------
+    let waterCount = parseInt(localStorage.getItem('waterCount') || '0');
+
+    function renderWater() {
+      const container = document.getElementById('waterGlasses');
+      container.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const glass = document.createElement('div');
+        glass.className = 'glass' + (i < waterCount ? ' filled' : '');
+        glass.onclick = () => {
+          waterCount = i + 1;
+          localStorage.setItem('waterCount', waterCount);
+          renderWater();
+          updateStats();
+        };
+        container.appendChild(glass);
+      }
+    }
+
+    function resetWater() {
+      waterCount = 0;
+      localStorage.setItem('waterCount', 0);
+      renderWater();
+      updateStats();
+    }
+
+    // ---------- BMI ----------
+    function calcBMI() {
+      const h = parseFloat(document.getElementById('height').value) / 100;
+      const w = parseFloat(document.getElementById('weight').value);
+      if (!h || !w) return alert('Please enter height and weight');
+
+      const bmi = (w / (h * h)).toFixed(1);
+      let category = '';
+      if (bmi < 18.5) category = 'Underweight';
+      else if (bmi < 25) category = 'Normal weight';
+      else if (bmi < 30) category = 'Overweight';
+      else category = 'Obese';
+
+      const result = document.getElementById('bmiResult');
+      result.style.display = 'block';
+      result.innerHTML = `Your BMI is <strong>${bmi}</strong> → <strong>${category}</strong>`;
+    }
+
+    // ---------- Workouts ----------
+    let workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+
+    function addWorkout() {
+      const exercise = document.getElementById('exercise').value.trim();
+      const details = document.getElementById('details').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+
+      if (!exercise) return alert('Please enter an exercise');
+
+      workouts.unshift({
+        id: Date.now(),
+        exercise,
+        details,
+        notes,
+        date: new Date().toLocaleString()
+      });
+
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+      document.getElementById('exercise').value = '';
+      document.getElementById('details').value = '';
+      document.getElementById('notes').value = '';
+      renderWorkouts();
+      updateStats();
+    }
+
+    function deleteWorkout(id) {
+      workouts = workouts.filter(w => w.id !== id);
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+      renderWorkouts();
+      updateStats();
+    }
+
+    function renderWorkouts() {
+      const list = document.getElementById('workoutList');
+      if (workouts.length === 0) {
+        list.innerHTML = '<div class="empty">No workouts logged yet. Add your first one!</div>';
+        return;
+      }
+
+      list.innerHTML = workouts.map(w => `
+        <div class="workout-item">
+          <div class="workout-info">
+            <strong>${w.exercise}</strong>
+            ${w.details ? ` • ${w.details}` : ''}
+            ${w.notes ? `<br><small style="color:var(--muted)">${w.notes}</small>` : ''}
+            <br><small style="color:var(--muted)">${w.date}</small>
+          </div>
+          <button class="delete-btn" onclick="deleteWorkout(${w.id})">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    // ---------- Stats ----------
+    function updateStats() {
+      document.getElementById('statWorkouts').textContent = workouts.length;
+      document.getElementById('statWater').textContent = waterCount;
+    }
+
+    // Init
+    renderWater();
+    renderWorkouts();
+    updateStats();
+  </script>
+</body>
+</html>
