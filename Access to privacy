@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calories Tracker</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 1.8rem;
+      color: var(--primary);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+    }
+
+    .total-box {
+      text-align: center;
+      padding: 24px 16px;
+    }
+
+    .total-number {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .goal {
+      margin-top: 8px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: #e2e8f0;
+      border-radius: 99px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input, button {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #4338ca;
+    }
+
+    .goal-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .goal-row input {
+      flex: 1;
+    }
+
+    .goal-row button {
+      width: 100px;
+      background: #0f172a;
+    }
+
+    .entries {
+      list-style: none;
+    }
+
+    .entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .entry:last-child {
+      border-bottom: none;
+    }
+
+    .entry-name {
+      font-weight: 500;
+    }
+
+    .entry-cal {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px 0;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .actions button {
+      flex: 1;
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .actions button:hover {
+      background: #cbd5e1;
+    }
+
+    .actions .danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 Calories Tracker</h1>
+    <p class="subtitle">Track what you eat today</p>
+
+    <!-- Total -->
+    <div class="card total-box">
+      <div class="total-number" id="total">0</div>
+      <div class="goal">of <span id="goal-display">2000</span> kcal goal</div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Add food -->
+    <div class="card">
+      <form id="add-form">
+        <input type="text" id="food" placeholder="Food name (e.g. Banana)" required>
+        <input type="number" id="calories" placeholder="Calories" min="1" required>
+        <button type="submit">Add Food</button>
+      </form>
+    </div>
+
+    <!-- Set goal -->
+    <div class="card">
+      <div class="goal-row">
+        <input type="number" id="goal-input" placeholder="Daily goal (kcal)" min="500">
+        <button id="set-goal">Set Goal</button>
+      </div>
+    </div>
+
+    <!-- Entries list -->
+    <div class="card">
+      <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Today's food</h3>
+      <ul class="entries" id="entries"></ul>
+      <div class="actions">
+        <button id="clear-day">Clear Day</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== DATA ==========
+    let entries = JSON.parse(localStorage.getItem('calories-entries')) || [];
+    let goal = parseInt(localStorage.getItem('calories-goal')) || 2000;
+
+    // ========== DOM ==========
+    const totalEl = document.getElementById('total');
+    const goalDisplay = document.getElementById('goal-display');
+    const progressEl = document.getElementById('progress');
+    const entriesEl = document.getElementById('entries');
+    const form = document.getElementById('add-form');
+    const foodInput = document.getElementById('food');
+    const calInput = document.getElementById('calories');
+    const goalInput = document.getElementById('goal-input');
+    const setGoalBtn = document.getElementById('set-goal');
+    const clearBtn = document.getElementById('clear-day');
+
+    // ========== RENDER ==========
+    function render() {
+      // Total
+      const total = entries.reduce((sum, e) => sum + e.calories, 0);
+      totalEl.textContent = total;
+
+      // Goal & progress
+      goalDisplay.textContent = goal;
+      const percent = Math.min((total / goal) * 100, 100);
+      progressEl.style.width = percent + '%';
+      progressEl.style.background = percent >= 100 ? 'var(--danger)' : 'var(--primary)';
+
+      // Entries list
+      if (entries.length === 0) {
+        entriesEl.innerHTML = '<li class="empty">No food added yet</li>';
+      } else {
+        entriesEl.innerHTML = entries.map((e, i) => `
+          <li class="entry">
+            <div>
+              <div class="entry-name">${e.name}</div>
+              <div class="entry-cal">${e.calories} kcal</div>
+            </div>
+            <button class="delete-btn" onclick="deleteEntry(${i})">✕</button>
+          </li>
+        `).join('');
+      }
+
+      // Save
+      localStorage.setItem('calories-entries', JSON.stringify(entries));
+      localStorage.setItem('calories-goal', goal);
+    }
+
+    // ========== ACTIONS ==========
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = foodInput.value.trim();
+      const calories = parseInt(calInput.value);
+
+      if (!name || !calories) return;
+
+      entries.unshift({ name, calories, time: new Date().toLocaleTimeString() });
+      foodInput.value = '';
+      calInput.value = '';
+      foodInput.focus();
+      render();
+    });
+
+    setGoalBtn.addEventListener('click', () => {
+      const val = parseInt(goalInput.value);
+      if (val && val >= 500) {
+        goal = val;
+        goalInput.value = '';
+        render();
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear all entries for today?')) {
+        entries = [];
+        render();
+      }
+    });
+
+    window.deleteEntry = (index) => {
+      entries.splice(index, 1);
+      render();
+    };
+
+    // Optional: reset at midnight
+    function checkNewDay() {
+      const today = new Date().toDateString();
+      const last = localStorage.getItem('last-day');
+      if (last && last !== today) {
+        entries = [];
+      }
+      localStorage.setItem('last-day', today);
+    }
+
+    // Init
+    checkNewDay();
+    render();
+  </script>
+</body>
+</html>
