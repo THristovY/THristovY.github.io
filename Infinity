@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Random Decision Maker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 40px 50px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 420px;
+      width: 90%;
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #ff6bcb, #ffa56b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+
+    .result {
+      font-size: 2.4rem;
+      font-weight: 700;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 25px 0;
+      transition: all 0.4s ease;
+    }
+
+    .mood {
+      font-size: 1.1rem;
+      color: #b8b8ff;
+      min-height: 50px;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+
+    button {
+      background: linear-gradient(90deg, #ff6bcb, #ffa56b);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 50px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(255, 107, 203, 0.3);
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 25px rgba(255, 107, 203, 0.45);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 0.8rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Random Decision Maker</h1>
+    <p class="subtitle">Can't decide? Let the universe choose for you.</p>
+
+    <div class="result" id="result">🤔</div>
+    <div class="mood" id="mood">Click the button below...</div>
+
+    <button onclick="decide()">Make a Decision</button>
+
+    <div class="footer">Made for you with ❤️ by Grok</div>
+  </div>
+
+  <script>
+    const answers = [
+      "Yes", "No", "Maybe", "Absolutely!", "Definitely not",
+      "Ask again later", "Hell yes 🔥", "Not today", "Go for it!",
+      "I wouldn't if I were you", "100%", "Nah", "The stars say yes",
+      "Better not", "Do it scared", "Why not?"
+    ];
+
+    const moods = [
+      "You got this 💪",
+      "The universe is rooting for you",
+      "Today is a good day to be bold",
+      "Whatever happens, you'll figure it out",
+      "Trust your gut a little more",
+      "Even small steps count",
+      "You're allowed to change your mind",
+      "Something good is coming",
+      "Keep going, you're closer than you think",
+      "Be kind to yourself today"
+    ];
+
+    function decide() {
+      const result = document.getElementById('result');
+      const mood = document.getElementById('mood');
+
+      // Fun animation
+      result.style.transform = 'scale(0.5)';
+      result.style.opacity = '0';
+
+      setTimeout(() => {
+        const randomAnswer = answers[Math.floor(Math.random() * answers.length)];
+        const randomMood = moods[Math.floor(Math.random() * moods.length)];
+
+        result.textContent = randomAnswer;
+        mood.textContent = randomMood;
+
+        result.style.transform = 'scale(1)';
+        result.style.opacity = '1';
+      }, 200);
+    }
+
+    // Make first decision automatically after 0.8s
+    setTimeout(decide, 800);
+  </script>
+</body>
+</html>
