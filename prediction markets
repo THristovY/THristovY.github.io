@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitFuel — Fitness & Diet</title>
+  <style>
+    :root {
+      --bg: #0c1117;
+      --card: #151c26;
+      --card2: #1c2633;
+      --line: #2a3544;
+      --text: #e8eef5;
+      --muted: #8b9bb0;
+      --green: #3dd68c;
+      --green-dim: rgba(61, 214, 140, 0.15);
+      --orange: #ff8a4c;
+      --blue: #5ba8ff;
+      --red: #ff6b7a;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+    header {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(12,17,23,.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+      padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .logo { font-weight: 800; letter-spacing: -0.03em; font-size: 1.2rem; }
+    .logo span { color: var(--green); }
+    .date-wrap input[type="date"] {
+      background: var(--card); color: var(--text); border: 1px solid var(--line);
+      border-radius: 10px; padding: 7px 10px; font: inherit;
+    }
+    nav {
+      display: flex; gap: 6px; padding: 12px 18px 0;
+      overflow-x: auto;
+    }
+    nav button {
+      background: transparent; border: 1px solid var(--line); color: var(--muted);
+      border-radius: 999px; padding: 8px 14px; font: inherit; cursor: pointer; white-space: nowrap;
+    }
+    nav button.active { background: var(--green-dim); color: var(--green); border-color: var(--green); }
+    main { max-width: 920px; margin: 0 auto; padding: 18px; }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px;
+    }
+    h2 { font-size: 1.05rem; margin-bottom: 12px; }
+    h3 { font-size: .9rem; color: var(--muted); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: .06em; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .stat {
+      background: var(--card2); border-radius: 12px; padding: 12px;
+    }
+    .stat .n { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; }
+    .stat .l { color: var(--muted); font-size: .8rem; }
+    .bar { height: 8px; background: #243040; border-radius: 99px; overflow: hidden; margin-top: 8px; }
+    .bar > i { display: block; height: 100%; border-radius: 99px; }
+    label { display: block; font-size: .82rem; color: var(--muted); margin: 8px 0 4px; }
+    input, select, textarea {
+      width: 100%; background: var(--card2); color: var(--text);
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+    button.primary, button.ghost, button.danger {
+      border: 0; border-radius: 12px; padding: 11px 14px; font: inherit; font-weight: 650; cursor: pointer;
+    }
+    button.primary { background: var(--green); color: #062214; width: 100%; margin-top: 12px; }
+    button.ghost { background: var(--card2); color: var(--text); border: 1px solid var(--line); }
+    button.danger { background: transparent; color: var(--red); padding: 4px 8px; }
+    .item {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--line);
+    }
+    .item:last-child { border-bottom: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .chips button {
+      background: var(--card2); color: var(--text); border: 1px solid var(--line);
+      border-radius: 999px; padding: 6px 10px; font-size: .8rem; cursor: pointer;
+    }
+    .hidden { display: none; }
+    .hint { color: var(--muted); font-size: .82rem; margin-top: 8px; }
+    .water { display: flex; flex-wrap: wrap; gap: 8px; }
+    .glass {
+      width: 36px; height: 44px; border: 2px solid var(--blue); border-radius: 0 0 8px 8px;
+      background: transparent; cursor: pointer;
+    }
+    .glass.full { background: linear-gradient(to top, #5ba8ff 70%, #9dceff); }
+    footer { text-align: center; color: var(--muted); font-size: .75rem; padding: 8px 18px 28px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Fit<span>Fuel</span></div>
+    <div class="date-wrap">
+      <input type="date" id="datePick" />
+    </div>
+  </header>
+  <nav>
+    <button class="tab-btn active" data-tab="dash">Dashboard</button>
+    <button class="tab-btn" data-tab="food">Food</button>
+    <button class="tab-btn" data-tab="workout">Workouts</button>
+    <button class="tab-btn" data-tab="profile">Profile</button>
+  </nav>
+  <main>
+    <section id="dash" class="tab"></section>
+    <section id="food" class="tab hidden"></section>
+    <section id="workout" class="tab hidden"></section>
+    <section id="profile" class="tab hidden"></section>
+  </main>
+  <footer>Data is stored only on this device (localStorage). Not medical advice.</footer>
+
+<script>
+const FOODS = [
+  { name: "Chicken breast 100g", cal: 165, p: 31, c: 0, f: 3.6 },
+  { name: "Egg (1 large)", cal: 72, p: 6.3, c: 0.4, f: 4.8 },
+  { name: "Greek yogurt 170g", cal: 100, p: 17, c: 6, f: 0.7 },
+  { name: "Oats 40g dry", cal: 154, p: 5.3, c: 27, f: 2.6 },
+  { name: "Banana", cal: 105, p: 1.3, c: 27, f: 0.4 },
+  { name: "Apple", cal: 95, p: 0.5, c: 25, f: 0.3 },
+  { name: "Rice cooked 150g", cal: 195, p: 4, c: 42, f: 0.4 },
+  { name: "Broccoli 100g", cal: 34, p: 2.8, c: 7, f: 0.4 },
+  { name: "Salmon 100g", cal: 208, p: 20, c: 0, f: 13 },
+  { name: "Tuna can drained", cal: 120, p: 26, c: 0, f: 1 },
+  { name: "Olive oil 1 tbsp", cal: 119, p: 0, c: 0, f: 13.5 },
+  { name: "Almonds 28g", cal: 164, p: 6, c: 6, f: 14 },
+  { name: "Protein shake", cal: 120, p: 24, c: 3, f: 1.5 },
+  { name: "Whole wheat bread 1 sl", cal: 80, p: 4, c: 14, f: 1 },
+  { name: "Avocado 1/2", cal: 120, p: 1.5, c: 6, f: 11 },
+];
+
+const WORKOUTS = [
+  { name: "Walking", kcalMin: 4 },
+  { name: "Running", kcalMin: 11 },
+  { name: "Cycling", kcalMin: 8 },
+  { name: "Weight training", kcalMin: 6 },
+  { name: "HIIT", kcalMin: 12 },
+  { name: "Yoga", kcalMin: 3 },
+  { name: "Swimming", kcalMin: 9 },
+];
+
+const KEY = "fitfuel_v1";
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function load() {
+  const raw = localStorage.getItem(KEY);
+  if (raw) return JSON.parse(raw);
+  return {
+    profile: { name: "", gender: "male", age: 28, weight: 75, height: 175, activity: 1.55, goal: "lose" },
+    days: {}
+  };
+}
+
+function save(state) { localStorage.setItem(KEY, JSON.stringify(state)); }
+
+let state = load();
+let currentDate = todayISO();
+
+function day() {
+  if (!state.days[currentDate]) {
+    state.days[currentDate] = { foods: [], workouts: [], water: 0, weight: "" };
+  }
+  return state.days[currentDate];
+}
+
+function calcTargets() {
+  const p = state.profile;
+  const w = Number(p.weight) || 70;
+  const h = Number(p.height) || 170;
+  const a = Number(p.age) || 30;
+  let bmr = 10 * w + 6.25 * h - 5 * a + (p.gender === "female" ? -161 : 5);
+  const tdee = bmr * Number(p.activity);
+  let cal = tdee;
+  if (p.goal === "lose") cal -= 450;
+  if (p.goal === "gain") cal += 350;
+  cal = Math.max(1200, Math.round(cal));
+  const proteinG = Math.round(Math.max(w * 1.6, cal * 0.28 / 4));
+  const fatG = Math.round(cal * 0.28 / 9);
+  const carbG = Math.round((cal - proteinG * 4 - fatG * 9) / 4);
+  const bmi = w / ((h / 100) ** 2);
+  return { bmr: Math.round(bmr), tdee: Math.round(tdee), cal, proteinG, fatG, carbG, bmi };
+}
+
+function totals() {
+  const d = day();
+  const food = d.foods.reduce((a, f) => ({
+    cal: a.cal + Number(f.cal), p: a.p + Number(f.p), c: a.c + Number(f.c), f: a.f + Number(f.f)
+  }), { cal: 0, p: 0, c: 0, f: 0 });
+  const burned = d.workouts.reduce((a, w) => a + Number(w.cal), 0);
+  return { ...food, burned, net: food.cal - burned };
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function switchTab(id) {
+  document.querySelectorAll(".tab").forEach(el => el.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === id));
+  render();
+}
+
+document.querySelectorAll(".tab-btn").forEach(b => {
+  b.onclick = () => switchTab(b.dataset.tab);
+});
+
+const datePick = document.getElementById("datePick");
+datePick.value = currentDate;
+datePick.onchange = () => { currentDate = datePick.value; render(); };
+
+function pct(used, goal) {
+  if (!goal) return 0;
+  return Math.min(100, Math.round(used / goal * 100));
+}
+
+function barColor(p) {
+  if (p > 105) return "var(--red)";
+  if (p > 85) return "var(--orange)";
+  return "var(--green)";
+}
+
+function renderDash() {
+  const t = calcTargets();
+  const s = totals();
+  const d = day();
+  const remain = t.cal - s.net;
+  document.getElementById("dash").innerHTML = `
+    <div class="card">
+      <h2>Today · ${currentDate}</h2>
+      <div class="grid">
+        <div class="stat"><div class="n">${Math.round(s.net)}</div><div class="l">Calories eaten − burned</div></div>
+        <div class="stat"><div class="n" style="color:${remain>=0?'var(--green)':'var(--red)'}">${Math.round(remain)}</div><div class="l">Remaining of ${t.cal}</div></div>
+        <div class="stat"><div class="n">${Math.round(s.burned)}</div><div class="l">Burned in workouts</div></div>
+        <div class="stat"><div class="n">${t.bmi.toFixed(1)}</div><div class="l">BMI · BMR ${t.bmr}</div></div>
+      </div>
+      <h3>Macros</h3>
+      ${macroBar("Protein", s.p, t.proteinG, "g", "var(--orange)")}
+      ${macroBar("Carbs", s.c, t.carbG, "g", "var(--blue)")}
+      ${macroBar("Fat", s.f, t.fatG, "g", "var(--green)")}
+    </div>
+    <div class="card">
+      <h2>Water · ${d.water}/8 glasses</h2>
+      <div class="water" id="waterRow"></div>
+      <p class="hint">Tap a glass. Target is 8 × 250ml ≈ 2 liters.</p>
+    </div>
+    <div class="card">
+      <h2>Weight check-in</h2>
+      <div class="row">
+        <div>
+          <label>Today's weight (kg)</label>
+          <input id="wToday" type="number" step="0.1" value="${d.weight || ""}" placeholder="${state.profile.weight}" />
+        </div>
+      </div>
+      <button class="primary" id="saveW">Save weight</button>
+    </div>
+    <div class="card">
+      <h2>Recent meals</h2>
+      ${d.foods.length ? d.foods.map(f => `<div class="item"><div>${f.name}<div class="l" style="color:var(--muted);font-size:.8rem">${f.meal || ""}</div></div><div>${f.cal} kcal</div></div>`).join("") : '<p class="hint">No food logged yet.</p>'}
+    </div>
+  `;
+  const wr = document.getElementById("waterRow");
+  for (let i = 1; i <= 8; i++) {
+    const g = document.createElement("button");
+    g.className = "glass" + (i <= d.water ? " full" : "");
+    g.onclick = () => { d.water = d.water === i ? i - 1 : i; save(state); render(); };
+    wr.appendChild(g);
+  }
+  document.getElementById("saveW").onclick = () => {
+    const val = document.getElementById("wToday").value;
+    d.weight = val;
+    if (val) state.profile.weight = Number(val);
+    save(state); render();
+  };
+}
+
+function macroBar(label, used, goal, unit, color) {
+  const p = pct(used, goal);
+  return `<div style="margin:8px 0">
+    <div style="display:flex;justify-content:space-between;font-size:.85rem">
+      <span>${label}</span><span>${Math.round(used)} / ${goal}${unit}</span>
+    </div>
+    <div class="bar"><i style="width:${p}%;background:${color}"></i></div>
+  </div>`;
+}
+
+function renderFood() {
+  const d = day();
+  document.getElementById("food").innerHTML = `
+    <div class="card">
+      <h2>Add food</h2>
+      <label>Quick add</label>
+      <div class="chips" id="foodChips"></div>
+      <label>Name</label>
+      <input id="fName" placeholder="e.g. Grilled salmon + rice" />
+      <div class="row">
+        <div><label>Meal</label>
+          <select id="fMeal">
+            <option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option>
+          </select>
+        </div>
+        <div><label>Calories</label><input id="fCal" type="number" value="0" /></div>
+      </div>
+      <div class="row">
+        <div><label>Protein g</label><input id="fP" type="number" step="0.1" value="0" /></div>
+        <div><label>Carbs g</label><input id="fC" type="number" step="0.1" value="0" /></div>
+      </div>
+      <div class="row">
+        <div><label>Fat g</label><input id="fF" type="number" step="0.1" value="0" /></div>
+        <div></div>
+      </div>
+      <button class="primary" id="addFood">Add to log</button>
+    </div>
+    <div class="card">
+      <h2>Today's food (${Math.round(totals().cal)} kcal)</h2>
+      <div id="foodList"></div>
+    </div>
+  `;
+  const chips = document.getElementById("foodChips");
+  FOODS.forEach(food => {
+    const b = document.createElement("button");
+    b.textContent = food.name;
+    b.onclick = () => {
+      document.getElementById("fName").value = food.name;
+      document.getElementById("fCal").value = food.cal;
+      document.getElementById("fP").value = food.p;
+      document.getElementById("fC").value = food.c;
+      document.getElementById("fF").value = food.f;
+    };
+    chips.appendChild(b);
+  });
+  document.getElementById("addFood").onclick = () => {
+    const name = document.getElementById("fName").value.trim();
+    if (!name) return alert("Add a food name");
+    d.foods.push({
+      id: uid(), name,
+      meal: document.getElementById("fMeal").value,
+      cal: Number(document.getElementById("fCal").value) || 0,
+      p: Number(document.getElementById("fP").value) || 0,
+      c: Number(document.getElementById("fC").value) || 0,
+      f: Number(document.getElementById("fF").value) || 0,
+    });
+    save(state); render();
+  };
+  document.getElementById("foodList").innerHTML = d.foods.length
+    ? d.foods.map(f => `
+      <div class="item">
+        <div><strong>${f.name}</strong><div class="hint">${f.meal} · P ${f.p} C ${f.c} F ${f.f}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong>${f.cal}</strong>
+          <button class="danger" data-id="${f.id}">✕</button>
+        </div>
+      </div>`).join("")
+    : '<p class="hint">Nothing logged.</p>';
+  document.querySelectorAll("#foodList .danger").forEach(btn => {
+    btn.onclick = () => {
+      d.foods = d.foods.filter(x => x.id !== btn.dataset.id);
+      save(state); render();
+    };
+  });
+}
+
+function renderWorkout() {
+  const d = day();
+  document.getElementById("workout").innerHTML = `
+    <div class="card">
+      <h2>Log workout</h2>
+      <label>Quick type</label>
+      <div class="chips" id="wChips"></div>
+      <label>Name</label>
+      <input id="wName" placeholder="e.g. Upper body" />
+      <div class="row">
+        <div><label>Minutes</label><input id="wMin" type="number" value="30" /></div>
+        <div><label>Calories burned</label><input id="wCal" type="number" value="180" /></div>
+      </div>
+      <label>Notes (sets / reps / distance)</label>
+      <input id="wNotes" placeholder="4x8 bench 60kg" />
+      <button class="primary" id="addW">Add workout</button>
+    </div>
+    <div class="card">
+      <h2>Today's training (${Math.round(totals().burned)} kcal)</h2>
+      <div id="wList"></div>
+    </div>
+  `;
+  const chips = document.getElementById("wChips");
+  WORKOUTS.forEach(w => {
+    const b = document.createElement("button");
+    b.textContent = w.name;
+    b.onclick = () => {
+      const min = Number(document.getElementById("wMin").value) || 30;
+      document.getElementById("wName").value = w.name;
+      document.getElementById("wCal").value = Math.round(w.kcalMin * min);
+    };
+    chips.appendChild(b);
+  });
+  document.getElementById("wMin").oninput = () => {
+    const name = document.getElementById("wName").value;
+    const found = WORKOUTS.find(w => w.name === name);
+    if (found) {
+      const min = Number(document.getElementById("wMin").value) || 0;
+      document.getElementById("wCal").value = Math.round(found.kcalMin * min);
+    }
+  };
+  document.getElementById("addW").onclick = () => {
+    const name = document.getElementById("wName").value.trim();
+    if (!name) return alert("Add a workout name");
+    d.workouts.push({
+      id: uid(), name,
+      min: Number(document.getElementById("wMin").value) || 0,
+      cal: Number(document.getElementById("wCal").value) || 0,
+      notes: document.getElementById("wNotes").value
+    });
+    save(state); render();
+  };
+  document.getElementById("wList").innerHTML = d.workouts.length
+    ? d.workouts.map(w => `
+      <div class="item">
+        <div><strong>${w.name}</strong><div class="hint">${w.min} min${w.notes ? " · " + w.notes : ""}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong>${w.cal} kcal</strong>
+          <button class="danger" data-id="${w.id}">✕</button>
+        </div>
+      </div>`).join("")
+    : '<p class="hint">No workouts yet.</p>';
+  document.querySelectorAll("#wList .danger").forEach(btn => {
+    btn.onclick = () => {
+      d.workouts = d.workouts.filter(x => x.id !== btn.dataset.id);
+      save(state); render();
+    };
+  });
+}
+
+function renderProfile() {
+  const p = state.profile;
+  const t = calcTargets();
+  document.getElementById("profile").innerHTML = `
+    <div class="card">
+      <h2>Your stats</h2>
+      <label>Name</label>
+      <input id="pName" value="${p.name}" placeholder="Optional" />
+      <div class="row">
+        <div><label>Sex</label>
+          <select id="pGender">
+            <option value="male" ${p.gender==="male"?"selected":""}>Male</option>
+            <option value="female" ${p.gender==="female"?"selected":""}>Female</option>
+          </select>
+        </div>
+        <div><label>Age</label><input id="pAge" type="number" value="${p.age}" /></div>
+      </div>
+      <div class="row">
+        <div><label>Weight (kg)</label><input id="pW" type="number" step="0.1" value="${p.weight}" /></div>
+        <div><label>Height (cm)</label><input id="pH" type="number" value="${p.height}" /></div>
+      </div>
+      <label>Activity</label>
+      <select id="pAct">
+        <option value="1.2" ${p.activity==1.2?"selected":""}>Sedentary (desk, little exercise)</option>
+        <option value="1.375" ${p.activity==1.375?"selected":""}>Light (1–3 workouts / week)</option>
+        <option value="1.55" ${p.activity==1.55?"selected":""}>Moderate (3–5 workouts / week)</option>
+        <option value="1.725" ${p.activity==1.725?"selected":""}>Very active (6–7 hard days)</option>
+        <option value="1.9" ${p.activity==1.9?"selected":""}>Extra active (physical job + training)</option>
+      </select>
+      <label>Goal</label>
+      <select id="pGoal">
+        <option value="lose" ${p.goal==="lose"?"selected":""}>Lose fat (~450 kcal deficit)</option>
+        <option value="maintain" ${p.goal==="maintain"?"selected":""}>Maintain</option>
+        <option value="gain" ${p.goal==="gain"?"selected":""}>Build muscle (~350 kcal surplus)</option>
+      </select>
+      <button class="primary" id="saveP">Save profile & recalculate</button>
+      <p class="hint">Uses Mifflin–St Jeor BMR × activity. Targets are estimates, not medical advice.</p>
+    </div>
+    <div class="card">
+      <h2>Calculated targets</h2>
+      <div class="grid">
+        <div class="stat"><div class="n">${t.bmr}</div><div class="l">BMR kcal</div></div>
+        <div class="stat"><div class="n">${t.tdee}</div><div class="l">TDEE (maintain)</div></div>
+        <div class="stat"><div class="n">${t.cal}</div><div class="l">Daily calorie target</div></div>
+        <div class="stat"><div class="n">${t.proteinG}g</div><div class="l">Protein target</div></div>
+      </div>
+      <p class="hint">Carbs ${t.carbG}g · Fat ${t.fatG}g · BMI ${t.bmi.toFixed(1)}</p>
+      <button class="ghost" id="exportBtn" style="width:100%;margin-top:10px">Export data (JSON)</button>
+      <button class="ghost" id="wipeBtn" style="width:100%;margin-top:8px;color:var(--red)">Clear all data</button>
+    </div>
+  `;
+  document.getElementById("saveP").onclick = () => {
+    state.profile = {
+      name: document.getElementById("pName").value,
+      gender: document.getElementById("pGender").value,
+      age: Number(document.getElementById("pAge").value),
+      weight: Number(document.getElementById("pW").value),
+      height: Number(document.getElementById("pH").value),
+      activity: Number(document.getElementById("pAct").value),
+      goal: document.getElementById("pGoal").value
+    };
+    save(state); render();
+    alert("Profile saved. Targets updated.");
+  };
+  document.getElementById("exportBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "fitfuel-backup.json";
+    a.click();
+  };
+  document.getElementById("wipeBtn").onclick = () => {
+    if (confirm("Delete all logs and profile on this device?")) {
+      localStorage.removeItem(KEY);
+      state = load();
+      render();
+    }
+  };
+}
+
+function render() {
+  const visible = document.querySelector(".tab:not(.hidden)").id;
+  if (visible === "dash") renderDash();
+  if (visible === "food") renderFood();
+  if (visible === "workout") renderWorkout();
+  if (visible === "profile") renderProfile();
+}
+
+render();
+</script>
+</body>
+</html>
