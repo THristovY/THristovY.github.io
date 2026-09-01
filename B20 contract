@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wanderly — Discover Places to Visit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Playfair Display', serif; }
+    #map { height: 500px; border-radius: 1rem; }
+    .card-hover:hover { transform: translateY(-6px); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-teal-700 to-emerald-600 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">🌍</span>
+        <h1 class="text-3xl font-bold">Wanderly</h1>
+      </div>
+      <button onclick="toggleItinerary()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full text-sm font-medium">
+        My Trip (<span id="tripCount">0</span>)
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="bg-gradient-to-b from-teal-700 to-teal-800 text-white pb-16 pt-10">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-4xl md:text-5xl font-bold mb-4">Find your next adventure</h2>
+      <p class="text-teal-100 mb-8 text-lg">Discover the most beautiful places on Earth</p>
+      <div class="relative max-w-xl mx-auto">
+        <input id="searchInput" type="text" placeholder="Search destinations..." 
+               class="w-full py-4 px-6 rounded-full text-slate-800 text-lg focus:outline-none shadow-lg"
+               onkeyup="filterDestinations()">
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <div class="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
+    <div class="bg-white rounded-2xl shadow-lg p-4 flex flex-wrap gap-3 justify-center">
+      <button onclick="setFilter('all')" class="filter-btn active px-5 py-2 rounded-full font-medium bg-teal-600 text-white">All</button>
+      <button onclick="setFilter('city')" class="filter-btn px-5 py-2 rounded-full font-medium bg-slate-100 hover:bg-slate-200">Cities</button>
+      <button onclick="setFilter('beach')" class="filter-btn px-5 py-2 rounded-full font-medium bg-slate-100 hover:bg-slate-200">Beaches</button>
+      <button onclick="setFilter('nature')" class="filter-btn px-5 py-2 rounded-full font-medium bg-slate-100 hover:bg-slate-200">Nature</button>
+      <button onclick="setFilter('historical')" class="filter-btn px-5 py-2 rounded-full font-medium bg-slate-100 hover:bg-slate-200">Historical</button>
+      <button onclick="setFilter('adventure')" class="filter-btn px-5 py-2 rounded-full font-medium bg-slate-100 hover:bg-slate-200">Adventure</button>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-12">
+    <!-- Map -->
+    <div class="mb-12">
+      <h3 class="text-2xl font-bold mb-4">Explore on the map</h3>
+      <div id="map" class="shadow-lg"></div>
+    </div>
+
+    <!-- Destinations Grid -->
+    <h3 class="text-2xl font-bold mb-6">Popular Destinations</h3>
+    <div id="destinationsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <img id="modalImg" class="w-full h-64 object-cover rounded-t-2xl">
+      <div class="p-6">
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 id="modalTitle" class="text-3xl font-bold"></h3>
+            <p id="modalCountry" class="text-teal-600 font-medium"></p>
+          </div>
+          <button onclick="closeModal()" class="text-2xl text-slate-400 hover:text-slate-600">×</button>
+        </div>
+        <p id="modalDesc" class="mt-4 text-slate-600 leading-relaxed"></p>
+        <div class="mt-6">
+          <h4 class="font-semibold mb-2">Top Attractions</h4>
+          <ul id="modalAttractions" class="list-disc list-inside text-slate-600 space-y-1"></ul>
+        </div>
+        <p class="mt-4"><strong>Best time to visit:</strong> <span id="modalBestTime"></span></p>
+        <button id="addTripBtn" onclick="addToTrip()" class="mt-6 w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-medium">
+          + Add to My Trip
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Itinerary Sidebar -->
+  <div id="itinerary" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform translate-x-full transition-transform z-40 p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold">My Trip</h3>
+      <button onclick="toggleItinerary()" class="text-2xl">×</button>
+    </div>
+    <div id="tripList" class="space-y-4"></div>
+    <p id="emptyTrip" class="text-slate-400 text-center mt-10">No places added yet</p>
+  </div>
+
+  <footer class="bg-slate-800 text-slate-300 py-8 text-center">
+    <p>Wanderly — Built for travelers who love discovering the world</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const destinations = [
+      {
+        id: 1, name: "Paris", country: "France", category: "city",
+        lat: 48.8566, lng: 2.3522,
+        image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+        desc: "The City of Light is famous for its art, fashion, gastronomy and culture. From the iconic Eiffel Tower to charming cafés along the Seine.",
+        attractions: ["Eiffel Tower", "Louvre Museum", "Notre-Dame", "Montmartre", "Champs-Élysées"],
+        bestTime: "April–June & September–October"
+      },
+      {
+        id: 2, name: "Santorini", country: "Greece", category: "beach",
+        lat: 36.3932, lng: 25.4615,
+        image: "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=800&q=80",
+        desc: "Famous for its stunning sunsets, white-washed buildings with blue domes, and dramatic caldera views over the Aegean Sea.",
+        attractions: ["Oia Sunset", "Fira", "Red Beach", "Ancient Thera", "Wine tasting"],
+        bestTime: "April–June & September–October"
+      },
+      {
+        id: 3, name: "Bali", country: "Indonesia", category: "nature",
+        lat: -8.4095, lng: 115.1889,
+        image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80",
+        desc: "Tropical paradise with lush rice terraces, ancient temples, beautiful beaches and a rich spiritual culture.",
+        attractions: ["Tegallalang Rice Terraces", "Ubud", "Tanah Lot Temple", "Uluwatu", "Nusa Penida"],
+        bestTime: "April–October (dry season)"
+      },
+      {
+        id: 4, name: "Rome", country: "Italy", category: "historical",
+        lat: 41.9028, lng: 12.4964,
+        image: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800&q=80",
+        desc: "The Eternal City — walk through 2,000 years of history among the Colosseum, Roman Forum and Vatican.",
+        attractions: ["Colosseum", "Vatican Museums", "Trevi Fountain", "Pantheon", "Roman Forum"],
+        bestTime: "April–June & September–October"
+      },
+      {
+        id: 5, name: "Tokyo", country: "Japan", category: "city",
+        lat: 35.6762, lng: 139.6503,
+        image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
+        desc: "A fascinating mix of ultra-modern and traditional, from neon-lit skyscrapers to peaceful temples and world-class food.",
+        attractions: ["Shibuya Crossing", "Senso-ji Temple", "Tokyo Skytree", "Tsukiji", "Meiji Shrine"],
+        bestTime: "March–May (cherry blossoms) & October–November"
+      },
+      {
+        id: 6, name: "New York City", country: "USA", category: "city",
+        lat: 40.7128, lng: -74.0060,
+        image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
+        desc: "The city that never sleeps. Iconic skyline, Broadway, world-class museums and endless energy.",
+        attractions: ["Statue of Liberty", "Central Park", "Times Square", "Empire State Building", "Brooklyn Bridge"],
+        bestTime: "April–June & September–November"
+      },
+      {
+        id: 7, name: "Machu Picchu", country: "Peru", category: "adventure",
+        lat: -13.1631, lng: -72.5450,
+        image: "https://images.unsplash.com/photo-1526392060635-9d34943adadb?w=800&q=80",
+        desc: "The legendary Inca citadel hidden high in the Andes. One of the New Seven Wonders of the World.",
+        attractions: ["Sun Gate", "Huayna Picchu", "Temple of the Sun", "Inca Trail", "Sacred Valley"],
+        bestTime: "May–September (dry season)"
+      },
+      {
+        id: 8, name: "Dubai", country: "UAE", category: "city",
+        lat: 25.2048, lng: 55.2708,
+        image: "https://images.unsplash.com/photo-1512453979798-5ea9336d1bff?w=800&q=80",
+        desc: "Futuristic luxury in the desert — record-breaking skyscrapers, man-made islands and extravagant experiences.",
+        attractions: ["Burj Khalifa", "Palm Jumeirah", "Dubai Mall", "Desert Safari", "Dubai Fountain"],
+        bestTime: "November–March"
+      },
+      {
+        id: 9, name: "Marrakech", country: "Morocco", category: "historical",
+        lat: 31.6295, lng: -7.9811,
+        image: "https://images.unsplash.com/photo-1597212618440-806262de4f6b?w=800&q=80",
+        desc: "Vibrant souks, stunning palaces, and the famous Jemaa el-Fnaa square. A feast for the senses.",
+        attractions: ["Jemaa el-Fnaa", "Bahia Palace", "Majorelle Garden", "Koutoubia Mosque", "Medina"],
+        bestTime: "March–May & September–November"
+      }
+    ];
+
+    let currentFilter = 'all';
+    let currentDest = null;
+    let trip = JSON.parse(localStorage.getItem('wanderlyTrip') || '[]');
+    let map, markers = [];
+
+    function initMap() {
+      map = L.map('map').setView([20, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      updateMarkers();
+    }
+
+    function updateMarkers() {
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+      const filtered = getFiltered();
+      filtered.forEach(d => {
+        const marker = L.marker([d.lat, d.lng]).addTo(map)
+          .bindPopup(`<b>${d.name}</b><br>${d.country}<br><button onclick="openModal(${d.id})" class="text-teal-600 mt-1">View details</button>`);
+        markers.push(marker);
+      });
+    }
+
+    function getFiltered() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      return destinations.filter(d => {
+        const matchCat = currentFilter === 'all' || d.category === currentFilter;
+        const matchSearch = d.name.toLowerCase().includes(search) || d.country.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      });
+    }
+
+    function renderCards() {
+      const grid = document.getElementById('destinationsGrid');
+      const filtered = getFiltered();
+      grid.innerHTML = filtered.map(d => `
+        <div class="bg-white rounded-2xl overflow-hidden shadow-md card-hover transition-all duration-300 cursor-pointer" onclick="openModal(${d.id})">
+          <img src="${d.image}" alt="${d.name}" class="w-full h-52 object-cover">
+          <div class="p-5">
+            <h4 class="text-xl font-bold">${d.name}</h4>
+            <p class="text-teal-600 text-sm font-medium">${d.country}</p>
+            <p class="text-slate-500 text-sm mt-2 line-clamp-2">${d.desc}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setFilter(cat) {
+      currentFilter = cat;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-teal-600', 'text-white');
+        btn.classList.add('bg-slate-100');
+      });
+      event.target.classList.add('bg-teal-600', 'text-white');
+      event.target.classList.remove('bg-slate-100');
+      filterDestinations();
+    }
+
+    function filterDestinations() {
+      renderCards();
+      updateMarkers();
+    }
+
+    function openModal(id) {
+      currentDest = destinations.find(d => d.id === id);
+      document.getElementById('modalImg').src = currentDest.image;
+      document.getElementById('modalTitle').textContent = currentDest.name;
+      document.getElementById('modalCountry').textContent = currentDest.country;
+      document.getElementById('modalDesc').textContent = currentDest.desc;
+      document.getElementById('modalBestTime').textContent = currentDest.bestTime;
+      document.getElementById('modalAttractions').innerHTML = currentDest.attractions.map(a => `<li>${a}</li>`).join('');
+      const inTrip = trip.includes(id);
+      document.getElementById('addTripBtn').textContent = inTrip ? '✓ Already in My Trip' : '+ Add to My Trip';
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('flex');
+    }
+
+    function addToTrip() {
+      if (!trip.includes(currentDest.id)) {
+        trip.push(currentDest.id);
+        localStorage.setItem('wanderlyTrip', JSON.stringify(trip));
+        updateTripUI();
+        document.getElementById('addTripBtn').textContent = '✓ Added to My Trip';
+      }
+    }
+
+    function removeFromTrip(id) {
+      trip = trip.filter(t => t !== id);
+      localStorage.setItem('wanderlyTrip', JSON.stringify(trip));
+      updateTripUI();
+    }
+
+    function updateTripUI() {
+      document.getElementById('tripCount').textContent = trip.length;
+      const list = document.getElementById('tripList');
+      const empty = document.getElementById('emptyTrip');
+      if (trip.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+      } else {
+        empty.classList.add('hidden');
+        list.innerHTML = trip.map(id => {
+          const d = destinations.find(dest => dest.id === id);
+          return `
+            <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
+              <img src="${d.image}" class="w-16 h-16 object-cover rounded-lg">
+              <div class="flex-1">
+                <p class="font-medium">${d.name}</p>
+                <p class="text-sm text-slate-500">${d.country}</p>
+              </div>
+              <button onclick="removeFromTrip(${id})" class="text-red-500 text-xl">×</button>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function toggleItinerary() {
+      document.getElementById('itinerary').classList.toggle('translate-x-full');
+    }
+
+    // Init
+    initMap();
+    renderCards();
+    updateTripUI();
+  </script>
+</body>
+</html>
