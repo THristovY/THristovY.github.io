@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121a2b;
+      --panel-2: #182236;
+      --line: #243049;
+      --text: #e8eefc;
+      --muted: #93a0b8;
+      --accent: #f0b429;
+      --up: #3dd68c;
+      --down: #ff6b6b;
+      --shadow: 0 10px 30px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1a2744 0%, transparent 50%),
+        radial-gradient(900px 500px at 100% 0%, #1c1630 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 18px 60px; }
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+    h1 { margin: 0; font-size: 28px; letter-spacing: -.03em; }
+    .sub { color: var(--muted); margin-top: 4px; font-size: 14px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, .file-btn {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.primary { background: var(--accent); color: #1a1403; border-color: transparent; }
+    button.danger { color: var(--down); }
+    button:hover, .file-btn:hover { filter: brightness(1.08); }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 14px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    input, select {
+      width: 100%;
+      background: #0e1626;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
+    }
+    .full { grid-column: 1 / -1; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .pos { color: var(--up); }
+    .neg { color: var(--down); }
+    .row-actions { display: flex; gap: 6px; }
+    canvas { max-height: 280px; }
+    @media (max-width: 900px) {
+      .cards, .grid, form { grid-template-columns: 1fr; }
+      header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Portfolio Tracker</h1>
+        <div class="sub">Simple local tracker for stocks, ETFs, crypto, and other assets.</div>
+      </div>
+      <div class="actions">
+        <button id="exportBtn">Export JSON</button>
+        <label class="file-btn">Import JSON
+          <input id="importFile" type="file" accept="application/json" hidden />
+        </label>
+        <button id="clearBtn" class="danger">Clear all</button>
+      </div>
+    </header>
+
+    <section class="cards">
+      <div class="card"><div class="label">Invested</div><div class="value" id="invested">$0.00</div></div>
+      <div class="card"><div class="label">Current value</div><div class="value" id="current">$0.00</div></div>
+      <div class="card"><div class="label">Profit / Loss</div><div class="value" id="pl">$0.00</div></div>
+      <div class="card"><div class="label">Return</div><div class="value" id="ret">0.00%</div></div>
+    </section>
+
+    <section class="grid">
+      <div class="panel">
+        <h3 style="margin:0 0 12px">Holdings</h3>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Avg cost</th>
+                <th>Price</th>
+                <th>Value</th>
+                <th>P/L</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <h3 style="margin:0 0 12px">Allocation</h3>
+        <canvas id="chart"></canvas>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:14px">
+      <h3 style="margin:0 0 12px" id="formTitle">Add holding</h3>
+      <form id="form">
+        <input type="hidden" id="editId" />
+        <div>
+          <label>Name</label>
+          <input id="name" placeholder="Apple" required />
+        </div>
+        <div>
+          <label>Ticker</label>
+          <input id="ticker" placeholder="AAPL" />
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="type">
+            <option>Stock</option>
+            <option>ETF</option>
+            <option>Crypto</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label>Quantity</label>
+          <input id="qty" type="number" step="any" min="0" required />
+        </div>
+        <div>
+          <label>Avg cost</label>
+          <input id="cost" type="number" step="any" min="0" required />
+        </div>
+        <div>
+          <label>Current price</label>
+          <input id="price" type="number" step="any" min="0" required />
+        </div>
+        <div class="full actions">
+          <button class="primary" type="submit" id="saveBtn">Add holding</button>
+          <button type="button" id="cancelBtn" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const KEY = "simple-portfolio-v1";
+    let holdings = JSON.parse(localStorage.getItem(KEY) || "[]");
+    let chart;
+
+    const $ = (id) => document.getElementById(id);
+    const money = (n) => n.toLocaleString(undefined, { style: "currency", currency: "USD" });
+    const pct = (n) => `${n.toFixed(2)}%`;
+    const uid = () => crypto.randomUUID();
+
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(holdings));
+      render();
+    }
+
+    function totals() {
+      return holdings.reduce((acc, h) => {
+        const invested = h.qty * h.cost;
+        const value = h.qty * h.price;
+        acc.invested += invested;
+        acc.value += value;
+        return acc;
+      }, { invested: 0, value: 0 });
+    }
+
+    function render() {
+      const t = totals();
+      const pl = t.value - t.invested;
+      const ret = t.invested ? (pl / t.invested) * 100 : 0;
+      $("invested").textContent = money(t.invested);
+      $("current").textContent = money(t.value);
+      $("pl").textContent = money(pl);
+      $("pl").className = "value " + (pl >= 0 ? "pos" : "neg");
+      $("ret").textContent = pct(ret);
+      $("ret").className = "value " + (ret >= 0 ? "pos" : "neg");
+
+      $("tbody").innerHTML = holdings.map(h => {
+        const invested = h.qty * h.cost;
+        const value = h.qty * h.price;
+        const gain = value - invested;
+        return `<tr>
+          <td><strong>${h.name}</strong><div class="sub">${h.ticker || ""}</div></td>
+          <td>${h.type}</td>
+          <td>${h.qty}</td>
+          <td>${money(h.cost)}</td>
+          <td>${money(h.price)}</td>
+          <td>${money(value)}</td>
+          <td class="${gain>=0?"pos":"neg"}">${money(gain)}</td>
+          <td class="row-actions">
+            <button data-edit="${h.id}">Edit</button>
+            <button class="danger" data-del="${h.id}">Delete</button>
+          </td>
+        </tr>`;
+      }).join("") || `<tr><td colspan="8" class="sub">No holdings yet. Add your first position below.</td></tr>`;
+
+      const labels = holdings.map(h => h.ticker || h.name);
+      const data = holdings.map(h => h.qty * h.price);
+      if (chart) chart.destroy();
+      chart = new Chart($("chart"), {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [{ data, borderWidth: 0 }]
+        },
+        options: {
+          plugins: {
+            legend: { labels: { color: "#93a0b8" } }
+          }
+        }
+      });
+    }
+
+    $("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const item = {
+        id: $("editId").value || uid(),
+        name: $("name").value.trim(),
+        ticker: $("ticker").value.trim().toUpperCase(),
+        type: $("type").value,
+        qty: Number($("qty").value),
+        cost: Number($("cost").value),
+        price: Number($("price").value)
+      };
+      const idx = holdings.findIndex(h => h.id === item.id);
+      if (idx >= 0) holdings[idx] = item;
+      else holdings.push(item);
+      resetForm();
+      save();
+    });
+
+    $("tbody").addEventListener("click", (e) => {
+      const editId = e.target.dataset.edit;
+      const delId = e.target.dataset.del;
+      if (editId) {
+        const h = holdings.find(x => x.id === editId);
+        $("editId").value = h.id;
+        $("name").value = h.name;
+        $("ticker").value = h.ticker;
+        $("type").value = h.type;
+        $("qty").value = h.qty;
+        $("cost").value = h.cost;
+        $("price").value = h.price;
+        $("formTitle").textContent = "Edit holding";
+        $("saveBtn").textContent = "Save changes";
+        $("cancelBtn").hidden = false;
+      }
+      if (delId) {
+        holdings = holdings.filter(h => h.id !== delId);
+        save();
+      }
+    });
+
+    function resetForm() {
+      $("form").reset();
+      $("editId").value = "";
+      $("formTitle").textContent = "Add holding";
+      $("saveBtn").textContent = "Add holding";
+      $("cancelBtn").hidden = true;
+    }
+    $("cancelBtn").addEventListener("click", resetForm);
+
+    $("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(holdings, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "portfolio.json";
+      a.click();
+    });
+
+    $("importFile").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      holdings = JSON.parse(await file.text());
+      save();
+      e.target.value = "";
+    });
+
+    $("clearBtn").addEventListener("click", () => {
+      if (confirm("Delete all holdings?")) {
+        holdings = [];
+        save();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
