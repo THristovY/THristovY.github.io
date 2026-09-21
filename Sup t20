@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lumen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: rgba(255,255,255,0.07);
+      --stroke: rgba(255,255,255,0.12);
+      --text: #f4f1ea;
+      --muted: #b7b3aa;
+      --accent: #c9f27a;
+      --accent-2: #7ee0ff;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    [data-theme="light"] {
+      --bg: #f3efe6;
+      --card: rgba(255,255,255,0.7);
+      --stroke: rgba(20,16,10,0.08);
+      --text: #16130e;
+      --muted: #6b665c;
+      --shadow: 0 16px 40px rgba(40,30,10,.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Outfit, system-ui, sans-serif;
+      background:
+        radial-gradient(900px 500px at 10% -10%, #2a3a1a 0%, transparent 50%),
+        radial-gradient(700px 400px at 110% 0%, #16343c 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 20px 18px 40px;
+    }
+    .wrap { max-width: 430px; margin: 0 auto; }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-family: "Instrument Serif", serif;
+      font-size: 34px; font-weight: 400; letter-spacing: -0.03em;
+    }
+    h1 span { font-style: italic; color: var(--accent); }
+    .icon-btn {
+      width: 42px; height: 42px; border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: var(--card); color: var(--text);
+      backdrop-filter: blur(16px);
+      cursor: pointer; font-size: 18px;
+    }
+    .hero, .card {
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      backdrop-filter: blur(18px);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .hero { padding: 22px; margin-bottom: 16px; }
+    .date { color: var(--muted); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+    .prompt {
+      font-family: "Instrument Serif", serif;
+      font-size: 28px; line-height: 1.15; margin: 10px 0 18px;
+    }
+    .moods { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mood {
+      flex: 1; min-width: 56px; height: 58px;
+      border-radius: 16px; border: 1px solid var(--stroke);
+      background: transparent; font-size: 24px; cursor: pointer;
+    }
+    .mood.on { background: rgba(201,242,122,.18); border-color: var(--accent); }
+    textarea, input[type="text"] {
+      width: 100%; margin-top: 14px; padding: 14px;
+      border-radius: 16px; border: 1px solid var(--stroke);
+      background: rgba(0,0,0,.15); color: var(--text);
+      font: 15px Outfit, sans-serif; resize: none;
+    }
+    [data-theme="light"] textarea, [data-theme="light"] input[type="text"] {
+      background: rgba(255,255,255,.55);
+    }
+    .btn {
+      width: 100%; margin-top: 12px; padding: 14px;
+      border: 0; border-radius: 16px; cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), #e8ffb0);
+      color: #111; font-weight: 700; font-size: 15px;
+    }
+    .grid { display: grid; gap: 12px; }
+    .card { padding: 18px; }
+    .card h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .habit {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-top: 1px solid var(--stroke);
+    }
+    .habit:first-of-type { border-top: 0; padding-top: 0; }
+    .check {
+      width: 26px; height: 26px; border-radius: 8px;
+      border: 1.5px solid var(--stroke); background: transparent; cursor: pointer;
+    }
+    .check.done { background: var(--accent); border-color: var(--accent); }
+    .streak { margin-left: auto; font-size: 12px; color: var(--accent-2); font-weight: 600; }
+    .spark {
+      font-family: "Instrument Serif", serif;
+      font-size: 22px; line-height: 1.3; font-style: italic;
+    }
+    .add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .add-row input { margin-top: 0; }
+    .add-row .btn { width: auto; padding: 12px 16px; margin: 0; }
+    .ghost {
+      background: transparent; color: var(--muted); border: 0;
+      cursor: pointer; font-size: 12px; margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Lu<span>men</span></h1>
+      <button class="icon-btn" id="theme" title="Toggle theme">◐</button>
+    </header>
+
+    <section class="hero">
+      <div class="date" id="date"></div>
+      <p class="prompt">How’s your inner weather today?</p>
+      <div class="moods" id="moods"></div>
+      <textarea id="note" rows="3" placeholder="One sentence. No performance."></textarea>
+      <button class="btn" id="saveMood">Log this vibe</button>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Tiny rituals</h2>
+        <div id="habits"></div>
+        <div class="add-row">
+          <input type="text" id="newHabit" placeholder="Add a 2-minute ritual" />
+          <button class="btn" id="addHabit">Add</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Daily spark</h2>
+        <p class="spark" id="spark"></p>
+        <button class="ghost" id="reshuffle">reshuffle</button>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const MOODS = ["🌤️","🌧️","🔥","🌙","🫧","🍋"];
+    const SPARKS = [
+      "Do the smallest honest version of the thing.",
+      "Your nervous system is not a productivity app.",
+      "One deep breath counts as a plot twist.",
+      "Soft focus still moves the day.",
+      "You don’t have to earn water and sunlight.",
+      "Leave one tab closed on purpose.",
+      "Beauty is a usable metric.",
+      "Consistency can be quiet."
+    ];
+
+    const today = new Date().toISOString().slice(0,10);
+    const $ = (id) => document.getElementById(id);
+
+    const store = {
+      get() { return JSON.parse(localStorage.getItem("lumen") || "{}"); },
+      set(data) { localStorage.setItem("lumen", JSON.stringify(data)); }
+    };
+
+    let data = store.get();
+    data.theme ||= "dark";
+    data.habits ||= [
+      { id: 1, name: "Drink water like you mean it", streak: 0, last: null },
+      { id: 2, name: "10-minute walk or stretch", streak: 0, last: null },
+      { id: 3, name: "Put the phone face down once", streak: 0, last: null }
+    ];
+    data.checkins ||= {};
+
+    document.documentElement.dataset.theme = data.theme === "light" ? "light" : "dark";
+    $("date").textContent = new Date().toLocaleDateString(undefined, {
+      weekday: "long", month: "long", day: "numeric"
+    });
+
+    const moodsEl = $("moods");
+    MOODS.forEach(m => {
+      const b = document.createElement("button");
+      b.className = "mood";
+      b.textContent = m;
+      b.onclick = () => {
+        [...moodsEl.children].forEach(x => x.classList.remove("on"));
+        b.classList.add("on");
+        data.pendingMood = m;
+      };
+      moodsEl.appendChild(b);
+    });
+
+    const saved = data.checkins[today];
+    if (saved) {
+      $("note").value = saved.note || "";
+      [...moodsEl.children].forEach(b => {
+        if (b.textContent === saved.mood) b.classList.add("on");
+      });
+      data.pendingMood = saved.mood;
+    }
+
+    $("saveMood").onclick = () => {
+      data.checkins[today] = {
+        mood: data.pendingMood || "🌤️",
+        note: $("note").value.trim()
+      };
+      store.set(data);
+      $("saveMood").textContent = "Saved";
+      setTimeout(() => $("saveMood").textContent = "Log this vibe", 1200);
+    };
+
+    function renderHabits() {
+      $("habits").innerHTML = "";
+      data.habits.forEach(h => {
+        const doneToday = h.last === today;
+        const row = document.createElement("div");
+        row.className = "habit";
+        row.innerHTML = `
+          <button class="check ${doneToday ? "done" : ""}" data-id="${h.id}"></button>
+          <div>${h.name}</div>
+          <div class="streak">${h.streak} day streak</div>
+        `;
+        $("habits").appendChild(row);
+      });
+    }
+
+    $("habits").onclick = (e) => {
+      const btn = e.target.closest(".check");
+      if (!btn) return;
+      const h = data.habits.find(x => x.id == btn.dataset.id);
+      if (h.last === today) {
+        h.last = null;
+        h.streak = Math.max(0, h.streak - 1);
+      } else {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+        h.streak = h.last === yesterday ? h.streak + 1 : 1;
+        h.last = today;
+      }
+      store.set(data);
+      renderHabits();
+    };
+
+    $("addHabit").onclick = () => {
+      const name = $("newHabit").value.trim();
+      if (!name) return;
+      data.habits.push({ id: Date.now(), name, streak: 0, last: null });
+      $("newHabit").value = "";
+      store.set(data);
+      renderHabits();
+    };
+
+    function spark() {
+      $("spark").textContent = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+    }
+    $("reshuffle").onclick = spark;
+    spark();
+    renderHabits();
+
+    $("theme").onclick = () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      data.theme = next;
+      store.set(data);
+    };
+  </script>
+</body>
+</html>
