@@ -1,0 +1,157 @@
+import hashlib
+import time
+import json
+from typing import List, Dict, Optional
+
+DIFFICULTY = 4  # number of leading zeros required in the hash (increase for harder mining)
+
+class Transaction:
+    def __init__(self, sender: str, recipient: str, amount: float):
+        self.sender = sender
+        self.recipient = recipient
+        self.amount = amount
+
+    def to_dict(self) -> Dict:
+        return {
+            "sender": self.sender,
+            "recipient": self.recipient,
+            "amount": self.amount,
+        }
+
+    def __repr__(self) -> str:
+        return f"{self.sender} -> {self.recipient}: {self.amount}"
+
+class Block:
+    def __init__(
+        self,
+        index: int,
+        timestamp: float,
+        transactions: List[Transaction],
+        previous_hash: str,
+        nonce: int = 0,
+    ):
+        self.index = index
+        self.timestamp = timestamp
+        self.transactions = transactions
+        self.previous_hash = previous_hash
+        self.nonce = nonce
+        self.hash = self.compute_hash()
+
+    def compute_hash(self) -> str:
+        block_string = json.dumps(
+            {
+                "index": self.index,
+                "timestamp": self.timestamp,
+                "transactions": [tx.to_dict() for tx in self.transactions],
+                "previous_hash": self.previous_hash,
+                "nonce": self.nonce,
+            },
+            sort_keys=True,
+        )
+        return hashlib.sha256(block_string.encode()).hexdigest()
+
+    def mine(self, difficulty: int = DIFFICULTY) -> None:
+        target = "0" * difficulty
+        while not self.hash.startswith(target):
+            self.nonce += 1
+            self.hash = self.compute_hash()
+
+class Blockchain:
+    def __init__(self):
+        self.chain: List[Block] = []
+        self.pending_transactions: List[Transaction] = []
+        self.mining_reward = 50.0
+        self.create_genesis_block()
+
+    def create_genesis_block(self) -> None:
+        genesis = Block(0, time.time(), [], "0")
+        genesis.mine()
+        self.chain.append(genesis)
+
+    @property
+    def last_block(self) -> Block:
+        return self.chain[-1]
+
+    def add_transaction(self, sender: str, recipient: str, amount: float) -> None:
+        if amount <= 0:
+            raise ValueError("Amount must be positive")
+        self.pending_transactions.append(Transaction(sender, recipient, amount))
+
+    def mine_pending_transactions(self, miner_address: str) -> Block:
+        # Coinbase-style reward (like Bitcoin)
+        reward_tx = Transaction("NETWORK", miner_address, self.mining_reward)
+        self.pending_transactions.insert(0, reward_tx)
+
+        new_block = Block(
+            index=len(self.chain),
+            timestamp=time.time(),
+            transactions=self.pending_transactions[:],
+            previous_hash=self.last_block.hash,
+        )
+        print(f"Mining block #{new_block.index}...")
+        start = time.time()
+        new_block.mine()
+        elapsed = time.time() - start
+        print(f"Mined in {elapsed:.2f}s | nonce={new_block.nonce} | hash={new_block.hash}")
+
+        self.chain.append(new_block)
+        self.pending_transactions = []
+        return new_block
+
+    def get_balance(self, address: str) -> float:
+        balance = 0.0
+        for block in self.chain:
+            for tx in block.transactions:
+                if tx.sender == address:
+                    balance -= tx.amount
+                if tx.recipient == address:
+                    balance += tx.amount
+        return balance
+
+    def is_valid(self) -> bool:
+        for i in range(1, len(self.chain)):
+            current = self.chain[i]
+            previous = self.chain[i - 1]
+            if current.hash != current.compute_hash():
+                return False
+            if current.previous_hash != previous.hash:
+                return False
+            if not current.hash.startswith("0" * DIFFICULTY):
+                return False
+        return True
+
+    def print_chain(self) -> None:
+        for block in self.chain:
+            print("-" * 60)
+            print(f"Block #{block.index}")
+            print(f"Time: {time.ctime(block.timestamp)}")
+            print(f"Prev: {block.previous_hash}")
+            print(f"Hash: {block.hash}")
+            print(f"Nonce: {block.nonce}")
+            print("Txs:")
+            for tx in block.transactions:
+                print(f"  {tx}")
+
+# --- demo ---
+if __name__ == "__main__":
+    chain = Blockchain()
+
+    alice = "alice"
+    bob = "bob"
+    miner = "miner1"
+
+    chain.add_transaction(alice, bob, 10)
+    chain.add_transaction(bob, alice, 3)
+    chain.mine_pending_transactions(miner)
+
+    chain.add_transaction(alice, bob, 2)
+    chain.mine_pending_transactions(miner)
+
+    print("\n=== CHAIN ===")
+    chain.print_chain()
+
+    print("\n=== BALANCES ===")
+    print(f"Alice: {chain.get_balance(alice)}")
+    print(f"Bob:   {chain.get_balance(bob)}")
+    print(f"Miner: {chain.get_balance(miner)}")
+    print(f"Valid: {chain.is_valid()}")
