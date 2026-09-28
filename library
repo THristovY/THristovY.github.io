@@ -1,0 +1,26 @@
+I’ll expand Storywell into a fuller library: more books, shelves/categories, and a better browse experience. Checking what’s already there.
+
+Rebuilding the app as a proper library: shelves, favorites, continue reading, and more books.
+
+The library is built. Storywell is now a full local library, not just a short list of stories.
+
+Open this file in a browser:
+
+
+
+**What the library does**
+- **Shelves:** Continue, Favorites, Original, Classics, Fables, and shelves you create
+- **Search** by title, author, or shelf
+- **Sort** by shelves, title, author, or progress
+- **Favorites** with the heart on each cover
+- **Book page** before you start reading
+- **Reader** with themes and font size
+- **Add book** to save your own text
+- Progress is stored in this browser
+
+**On the shelves now**
+- 4 original stories
+- Public-domain classics: Poe, O. Henry, Bierce, Wilde
+- Fables: Aesop and Grimm
+
+If you want next: chapters inside a book, import a `.txt` file, or a dark wood “bookstore” look.
